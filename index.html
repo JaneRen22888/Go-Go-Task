@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Go Go Task</title>
+  <!-- 修改 React CDN 链接 -->
+  <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #fff0f0;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    @keyframes popup {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+      50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    // Theme configuration
+    const theme = {
+      colors: {
+        primary: '#8B5CF6',
+        priorities: {
+          P0: '#EF4444',
+          P1: '#F59E0B',
+          P2: '#3B82F6',
+          P3: '#10B981',
+        },
+        background: '#FFFFFF',
+        text: '#374151',
+        border: '#E5E7EB',
+      },
+      borderRadius: '12px',
+      shadows: {
+        main: '0 2px 8px rgba(0, 0, 0, 0.05)',
+        hover: '0 4px 12px rgba(0, 0, 0, 0.1)',
+      },
+    };
+
+    // Encouragement messages
+    const encouragements = [
+      "Great job! 🌟",
+      "You're on fire! 🔥",
+      "Keep crushing it! 💪",
+      "Awesome work! ⭐",
+      "You're unstoppable! 🚀",
+      "Way to go! 🎯",
+      "You're amazing! 🌈",
+      "Fantastic! 🎨",
+      "You rock! 🎸",
+      "Brilliant! 💡"
+    ];
+
+    // TaskInput Component
+    function TaskInput({ onAddTask }) {
+      const [content, setContent] = React.useState('');
+      const [priority, setPriority] = React.useState('P2');
+      const [estimatedTime, setEstimatedTime] = React.useState(30);
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!content.trim()) return;
+
+        const newTask = {
+          id: Date.now().toString(),
+          content: content.trim(),
+          priority,
+          estimatedTime: parseInt(estimatedTime),
+          completed: false,
+          createdAt: Date.now(),
+        };
+
+        onAddTask(newTask);
+        setContent('');
+        setPriority('P2');
+        setEstimatedTime(30);
+      };
+
+      return (
+        <div style={{
+          background: theme.colors.background,
+          padding: '1.5rem',
+          borderRadius: theme.borderRadius,
+          boxShadow: theme.shadows.main,
+          marginBottom: '2rem',
+        }}>
+          <form onSubmit={handleSubmit} style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem',
+          }}>
+            <input
+              type="text"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Enter new task..."
+              style={{
+                padding: '0.8rem',
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: theme.borderRadius,
+                fontSize: '1rem',
+              }}
+            />
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <select
+                value={priority}
+                onChange={(e) => setPriority(e.target.value)}
+                style={{
+                  padding: '0.8rem',
+                  border: `1px solid ${theme.colors.border}`,
+                  borderRadius: theme.borderRadius,
+                  flex: 1,
+                }}
+              >
+                <option value="P0">P0 - Urgent</option>
+                <option value="P1">P1 - Important</option>
+                <option value="P2">P2 - Normal</option>
+                <option value="P3">P3 - Low Priority</option>
+              </select>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.8rem',
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: theme.borderRadius,
+                flex: 1,
+              }}>
+                <input
+                  type="text"
+                  value={estimatedTime}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^0-9]/g, '');
+                    let numValue = parseInt(value || '0');
+                    if (numValue > 180) numValue = 180;
+                    setEstimatedTime(numValue);
+                  }}
+                  placeholder="30"
+                  style={{
+                    width: '60px',
+                    padding: '0.3rem',
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: theme.borderRadius,
+                    textAlign: 'center',
+                  }}
+                />
+                <span style={{ color: theme.colors.text }}>min</span>
+              </div>
+            </div>
+            <button
+              type="submit"
+              style={{
+                padding: '0.8rem',
+                background: theme.colors.primary,
+                color: 'white',
+                border: 'none',
+                borderRadius: theme.borderRadius,
+                fontSize: '1rem',
+                cursor: 'pointer',
+              }}
+            >
+              Add Task
+            </button>
+          </form>
+        </div>
+      );
+    }
+
+    // TaskItem Component
+    function TaskItem({ task, onComplete, onDelete, draggable = false, onDragStart, onDragOver, onDrop, index }) {
+      const formatTime = (minutes) => {
+        if (minutes < 60) return `${minutes} mins`;
+        const hours = minutes / 60;
+        return `${hours} ${hours === 1 ? 'hour' : 'hours'}`;
+      };
+
+      return (
+        <div 
+          draggable={draggable}
+          onDragStart={(e) => onDragStart?.(e, index)}
+          onDragOver={(e) => onDragOver?.(e, index)}
+          onDrop={(e) => onDrop?.(e, index)}
+          style={{
+            background: theme.colors.background,
+            padding: '0.7rem',
+            borderRadius: theme.borderRadius,
+            boxShadow: theme.shadows.main,
+            marginBottom: '0.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1rem',
+            opacity: task.completed ? 0.6 : 1,
+            transition: 'all 0.3s ease',
+            cursor: draggable ? 'grab' : 'default',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={task.completed}
+            onChange={() => {
+              onComplete(task.id);
+              if (!task.completed) {
+                const message = encouragements[Math.floor(Math.random() * encouragements.length)];
+                confetti({
+                  particleCount: 100,
+                  spread: 70,
+                  origin: { y: 0.6 }
+                });
+
+                const popup = document.createElement('div');
+                popup.textContent = message;
+                popup.style.position = 'fixed';
+                popup.style.top = '50%';
+                popup.style.left = '50%';
+                popup.style.transform = 'translate(-50%, -50%)';
+                popup.style.background = theme.colors.primary;
+                popup.style.color = 'white';
+                popup.style.padding = '1rem 2rem';
+                popup.style.borderRadius = theme.borderRadius;
+                popup.style.animation = 'popup 1.5s ease-in-out forwards';
+                popup.style.zIndex = '1000';
+                popup.style.fontSize = '1.2rem';
+                popup.style.boxShadow = theme.shadows.main;
+                document.body.appendChild(popup);
+
+                setTimeout(() => {
+                  document.body.removeChild(popup);
+                }, 1500);
+              }
+            }}
+            style={{
+              width: '20px',
+              height: '20px',
+              cursor: 'pointer',
+            }}
+          />
+          <div style={{
+            flex: 1,
+            textDecoration: task.completed ? 'line-through' : 'none',
+          }}>
+            <div style={{
+              fontSize: '1rem',
+              color: theme.colors.text,
+              marginBottom: '0.5rem',
+            }}>
+              {task.content}
+            </div>
+            <div style={{
+              display: 'flex',
+              gap: '1rem',
+              fontSize: '0.875rem',
+            }}>
+              <span style={{
+                padding: '0.25rem 0.5rem',
+                borderRadius: theme.borderRadius,
+                background: theme.colors.priorities[task.priority],
+                color: 'white',
+              }}>
+                {task.priority}
+              </span>
+              <span style={{
+                color: theme.colors.text,
+                opacity: 0.8,
+              }}>
+                Est: {formatTime(task.estimatedTime)}
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={() => onDelete(task.id)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: theme.colors.text,
+              opacity: 0.5,
+              cursor: 'pointer',
+              padding: '0.5rem',
+              fontSize: '1.2rem',
+              transition: 'all 0.3s ease',
+            }}
+            onMouseOver={(e) => e.target.style.opacity = 1}
+            onMouseOut={(e) => e.target.style.opacity = 0.5}
+          >
+            ×
+          </button>
+        </div>
+      );
+    }
+
+    // TaskList Component
+    function TaskList({ tasks, onComplete, onDelete, onTasksReorder }) {
+      const [showAllCompleted, setShowAllCompleted] = React.useState(false);
+      const [draggedTask, setDraggedTask] = React.useState(null);
+
+      const sortedTasks = React.useMemo(() => {
+        const priorityOrder = { P0: 0, P1: 1, P2: 2, P3: 3 };
+        return [...tasks].sort((a, b) => {
+          if (a.completed !== b.completed) {
+            return a.completed ? 1 : -1;
+          }
+          return priorityOrder[a.priority] - priorityOrder[b.priority];
+        });
+      }, [tasks]);
+
+      const incompleteTasks = sortedTasks.filter(task => !task.completed);
+      const completedTasks = sortedTasks.filter(task => task.completed);
+      const displayedCompletedTasks = showAllCompleted ? completedTasks : completedTasks.slice(0, 3);
+
+      const handleDragStart = (e, index) => {
+        const task = incompleteTasks[index];
+        setDraggedTask(task);
+        e.dataTransfer.effectAllowed = 'move';
+      };
+
+      const handleDragOver = (e, index) => {
+        e.preventDefault();
+        const targetTask = incompleteTasks[index];
+        
+        if (draggedTask && draggedTask.priority === targetTask.priority) {
+          e.dataTransfer.dropEffect = 'move';
+        } else {
+          e.dataTransfer.dropEffect = 'none';
+        }
+      };
+
+      const handleDrop = (e, dropIndex) => {
+        e.preventDefault();
+        if (!draggedTask) return;
+
+        const targetTask = incompleteTasks[dropIndex];
+        
+        if (draggedTask.priority === targetTask.priority) {
+          const newTasks = [...tasks];
+          
+          const draggedIndex = newTasks.findIndex(t => t.id === draggedTask.id);
+          const dropTargetIndex = newTasks.findIndex(t => t.id === targetTask.id);
+          
+          newTasks.splice(draggedIndex, 1);
+          newTasks.splice(dropTargetIndex, 0, draggedTask);
+          
+          onTasksReorder(newTasks);
+        }
+        
+        setDraggedTask(null);
+      };
+
+      return (
+        <div>
+          <div style={{ marginBottom: '2rem' }}>
+            <h2 style={{
+              color: theme.colors.text,
+              marginBottom: '1rem',
+              fontSize: '1.2rem',
+            }}>
+              In Progress ({incompleteTasks.length})
+            </h2>
+            {incompleteTasks.map((task, index) => (
+              <TaskItem
+                key={task.id}
+                task={task}
+                onComplete={onComplete}
+                onDelete={onDelete}
+                draggable={true}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                index={index}
+              />
+            ))}
+          </div>
+
+          {completedTasks.length > 0 && (
+            <div>
+              <h2 style={{
+                color: theme.colors.text,
+                marginBottom: '1rem',
+                fontSize: '1.2rem',
+                opacity: 0.7,
+              }}>
+                Completed ({completedTasks.length})
+              </h2>
+              {displayedCompletedTasks.map(task => (
+                <TaskItem
+                  key={task.id}
+                  task={task}
+                  onComplete={onComplete}
+                  onDelete={onDelete}
+                />
+              ))}
+              {completedTasks.length > 3 && (
+                <button
+                  onClick={() => setShowAllCompleted(!showAllCompleted)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: theme.colors.primary,
+                    cursor: 'pointer',
+                    padding: '0.5rem',
+                    fontSize: '0.9rem',
+                    opacity: 0.8,
+                    transition: 'all 0.3s ease',
+                    display: 'block',
+                    margin: '0.5rem auto',
+                  }}
+                  onMouseOver={(e) => e.target.style.opacity = 1}
+                  onMouseOut={(e) => e.target.style.opacity = 0.8}
+                >
+                  {showAllCompleted ? 'Show Less' : `Show ${completedTasks.length - 3} More`}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // App Component
+    function App() {
+      const [tasks, setTasks] = React.useState(() => {
+        const saved = localStorage.getItem('tasks');
+        return saved ? JSON.parse(saved) : [];
+      });
+
+      React.useEffect(() => {
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+      }, [tasks]);
+
+      const handleAddTask = (newTask) => {
+        setTasks(prev => [...prev, newTask]);
+      };
+
+      const handleComplete = (taskId) => {
+        setTasks(prev => prev.map(task =>
+          task.id === taskId
+            ? { ...task, completed: !task.completed }
+            : task
+        ));
+      };
+
+      const handleDelete = (taskId) => {
+        setTasks(prev => prev.filter(task => task.id !== taskId));
+      };
+
+      const handleTasksReorder = (newTasks) => {
+        setTasks(newTasks);
+      };
+
+      return (
+        <div style={{
+          maxWidth: '800px',
+          margin: '0 auto',
+          padding: '2rem',
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+        }}>
+          <h1 style={{
+            color: theme.colors.primary,
+            textAlign: 'center',
+            marginBottom: '2rem',
+          }}>Go Go Task</h1>
+          
+          <TaskInput onAddTask={handleAddTask} />
+          
+          <TaskList
+            tasks={tasks}
+            onComplete={handleComplete}
+            onDelete={handleDelete}
+            onTasksReorder={handleTasksReorder}
+          />
+          
+          <footer style={{
+            textAlign: 'center',
+            marginTop: 'auto',
+            padding: '1rem',
+          }}>
+            <a
+              href="mailto:rtj2288@gmail.com"
+              style={{
+                color: '#9CA3AF',
+                textDecoration: 'none',
+                fontSize: '0.9rem',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseOver={(e) => e.target.style.opacity = 0.8}
+              onMouseOut={(e) => e.target.style.opacity = 1}
+            >
+              Tien @ San Jose
+            </a>
+          </footer>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html> 
