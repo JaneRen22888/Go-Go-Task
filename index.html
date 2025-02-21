@@ -125,7 +125,7 @@
               }}
               autoComplete="off"
             />
-            <div style={{ display: 'flex', gap: '1rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', flexDirection: window.innerWidth < 768 ? 'column' : 'row' }}>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
@@ -140,7 +140,7 @@
                   background: theme.colors.background,
                   color: theme.colors.text,
                   cursor: 'pointer',
-                  fontSize: window.innerWidth < 768 ? '1rem' : '0.9rem',
+                  fontSize: window.innerWidth < 788 ? '1rem' : '0.9rem',
                 }}
               >
                 <option value="P0">P0 - Urgent</option>
@@ -152,10 +152,12 @@
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                padding: '0.8rem',
+                padding: window.innerWidth < 788 ? '0.5rem' : '0.8rem',
                 border: `1px solid ${theme.colors.border}`,
                 borderRadius: theme.borderRadius,
                 flex: 1,
+                background: theme.colors.background,
+                minHeight: window.innerWidth < 788 ? '3rem' : 'auto',
               }}>
                 <input
                   type="text"
@@ -173,9 +175,13 @@
                     border: `1px solid ${theme.colors.border}`,
                     borderRadius: theme.borderRadius,
                     textAlign: 'center',
+                    fontSize: window.innerWidth < 788 ? '1rem' : '0.9rem',
                   }}
                 />
-                <span style={{ color: theme.colors.text }}>min</span>
+                <span style={{ 
+                  color: theme.colors.text,
+                  fontSize: window.innerWidth < 788 ? '1rem' : '0.9rem',
+                }}>min</span>
               </div>
             </div>
             <button
@@ -213,13 +219,13 @@
           onDrop={(e) => onDrop?.(e, index)}
           style={{
             background: theme.colors.background,
-            padding: window.innerWidth < 768 ? '0.5rem' : '0.7rem',
+            padding: window.innerWidth < 788 ? '0.5rem' : '0.7rem',
             borderRadius: theme.borderRadius,
             boxShadow: theme.shadows.main,
             marginBottom: '0.5rem',
             display: 'flex',
             alignItems: 'center',
-            gap: window.innerWidth < 768 ? '0.5rem' : '1rem',
+            gap: window.innerWidth < 788 ? '0.5rem' : '1rem',
             opacity: task.completed ? 0.6 : 1,
             transition: 'all 0.3s ease',
             cursor: draggable ? 'grab' : 'default',
@@ -282,11 +288,11 @@
               fontSize: '0.875rem',
             }}>
               <span style={{
-                padding: window.innerWidth < 768 ? '0.2rem 0.4rem' : '0.25rem 0.5rem',
+                padding: window.innerWidth < 788 ? '0.2rem 0.4rem' : '0.25rem 0.5rem',
                 borderRadius: theme.borderRadius,
                 background: theme.colors.priorities[task.priority],
                 color: 'white',
-                fontSize: window.innerWidth < 768 ? '0.8rem' : '0.875rem',
+                fontSize: window.innerWidth < 788 ? '0.8rem' : '0.875rem',
               }}>
                 {task.priority}
               </span>
