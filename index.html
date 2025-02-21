@@ -247,17 +247,16 @@
                 const popup = document.createElement('div');
                 popup.textContent = message;
                 popup.style.position = 'fixed';
-                popup.style.top = '50%';
+                popup.style.top = '70%';
                 popup.style.left = '50%';
                 popup.style.transform = 'translate(-50%, -50%)';
-                popup.style.background = theme.colors.primary;
-                popup.style.color = 'white';
-                popup.style.padding = '1rem 2rem';
-                popup.style.borderRadius = theme.borderRadius;
+                popup.style.color = theme.colors.primary;
+                popup.style.padding = '1rem';
                 popup.style.animation = 'popup 1.5s ease-in-out forwards';
                 popup.style.zIndex = '1000';
-                popup.style.fontSize = '1.2rem';
-                popup.style.boxShadow = theme.shadows.main;
+                popup.style.fontSize = window.innerWidth < 788 ? '1.2rem' : '1.4rem';
+                popup.style.fontWeight = 'bold';
+                popup.style.textShadow = '0 2px 4px rgba(0,0,0,0.1)';
                 document.body.appendChild(popup);
 
                 setTimeout(() => {
